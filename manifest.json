@@ -1,10 +1,10 @@
 {
-	"id": "obsidian-sample-plugin",
-	"name": "Sample Plugin",
-	"version": "1.0.1",
+	"id": "obsidian-folder-locker",
+	"name": "Folder Locker",
+	"version": "0.0.1",
 	"minAppVersion": "0.9.12",
-	"description": "This is a sample plugin for Obsidian. This plugin demonstrates some of the capabilities of the Obsidian API.",
-	"author": "Obsidian",
-	"authorUrl": "https://obsidian.md/about",
-	"isDesktopOnly": false
+	"description": "Password protect folders",
+	"author": "JDSeiler",
+	"authorUrl": "https://github.com/JDSeiler/obsidian-folder-locker",
+	"isDesktopOnly": true
 }
