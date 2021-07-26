@@ -1,4 +1,4 @@
-import { App, Modal, Notice, Plugin, PluginSettingTab, Setting } from 'obsidian';
+import { App, FileSystemAdapter, FuzzySuggestModal, Menu, Modal, normalizePath, Notice, Plugin, PluginSettingTab, Setting, TAbstractFile, View } from 'obsidian';
 
 interface MyPluginSettings {
     mySetting: string;
@@ -16,6 +16,17 @@ export default class MyPlugin extends Plugin {
 
         await this.loadSettings();
 
+        // Adding a context menu item
+        this.app.workspace.on('file-menu', (menu: Menu, file: TAbstractFile, source: string) => {
+            console.log(menu);
+            menu.addItem((testItem) => {
+                testItem.setTitle('My menu item')
+                testItem.onClick(_e => {
+                    console.log(file);
+                });
+            });
+        });
+
         this.addRibbonIcon('dice', 'Sample Plugin', () => {
             new Notice('This is a notice!');
         });
@@ -25,9 +36,6 @@ export default class MyPlugin extends Plugin {
         this.addCommand({
             id: 'open-sample-modal',
             name: 'Open Sample Modal',
-            // callback: () => {
-            // 	console.log('Simple Callback');
-            // },
             checkCallback: (checking: boolean) => {
                 let leaf = this.app.workspace.activeLeaf;
                 if (leaf) {
@@ -41,28 +49,14 @@ export default class MyPlugin extends Plugin {
         });
 
         this.addCommand({
-            id: 'list-all-files',
-            name: 'List all files',
+            id: 'create-locker',
+            name: 'Create Locker',
             callback: () => {
-                const files = this.app.vault.getFiles();
-            
-                for (const file of files) {
-                    console.log(file.name);
-                }
+                new FileSelectorModal(this.app).open();
             }
-        });
+        });  
 
         this.addSettingTab(new SampleSettingTab(this.app, this));
-
-        // this.registerCodeMirror((cm: CodeMirror.Editor) => {
-        // 	console.log('codemirror', cm);
-        // });
-
-        // this.registerDomEvent(document, 'click', (evt: MouseEvent) => {
-        // 	console.log('click', evt);
-        // });
-
-        // this.registerInterval(window.setInterval(() => console.log('setInterval'), 5 * 60 * 1000));
     }
 
     onunload() {
@@ -91,6 +85,42 @@ class SampleModal extends Modal {
     onClose() {
         let {contentEl} = this;
         contentEl.empty();
+    }
+}
+
+class FileSelectorModal extends FuzzySuggestModal<string> {
+    // List of all folders that contain files
+    folderList: string[] = [];
+    limit = 10;
+
+    constructor(app: App) {
+        super(app);
+        this.setPlaceholder('Create locker in...');
+
+        let visited: {
+            [k: string]: boolean
+        } = {};
+        this.app.vault.getFiles().forEach(file => {
+            if (!file.parent.isRoot() && !visited[file.parent.path]) {
+                this.folderList.push('./' + file.path.split('/').slice(0, -1).join('/'));
+                visited[file.parent.path] = true;
+            }
+        });
+    }
+
+    getItems(): string[] {
+        return this.folderList;
+    }
+
+    getItemText(item: string): string {
+        return item;
+    }
+
+    onChooseItem(item: string, _evt: MouseEvent | KeyboardEvent): void {
+        console.log(`${item} was chosen!`);
+        const fsAdap = this.app.vault.adapter as FileSystemAdapter;
+        const fullPath = fsAdap.getFullPath(normalizePath(item));
+        console.log(fullPath);
     }
 }
 
