@@ -1,4 +1,5 @@
-import { App, FileSystemAdapter, FuzzySuggestModal, Menu, Modal, normalizePath, Notice, Plugin, PluginSettingTab, Setting, TAbstractFile, View } from 'obsidian';
+import { App, Editor, FileSystemAdapter, FuzzySuggestModal, MarkdownView, Menu, Modal, normalizePath, Notice, Plugin, PluginSettingTab, Setting, TAbstractFile, View } from 'obsidian';
+import { decryptWithPassword, encryptWithPassword, setUpSystem } from './encryption';
 
 interface MyPluginSettings {
     mySetting: string;
@@ -25,6 +26,94 @@ export default class MyPlugin extends Plugin {
                     console.log(file);
                 });
             });
+        });
+
+        /*
+        Many tasks:
+        TODO: Prompt the user for a password instead of hard coding it
+        TODO: Create a change password command
+        TODO: Write UI code for when passwords don't match, successful encryption, etc.
+        TODO: Add a setting for toggling encryption of frontmatter
+        PAUSE: Refactor
+        TODO: Add a command for encrypting all the files in a directory, recursively.
+        */
+        this.addCommand({
+            id: 'create-encryption-keys',
+            name: 'Initial Setup',
+            callback: () => {
+                // Don't overwrite anything if it already exists, use a separate method for changing password
+                const TEST_PASSWORD = 'password';
+                const system = setUpSystem(TEST_PASSWORD);
+                const saveLocation = this.app.vault.configDir + '/plugins/obsidian-folder-locker/crypto.json';
+                // Throws an exception if the file exists, so this is safe currently.
+                this.app.vault.create(saveLocation, JSON.stringify(system));
+            }
+        })
+
+        this.addCommand({
+            id: 'encrypt-current-file',
+            name: 'Encrypt Current File',
+            editorCheckCallback: (checking: boolean, editor: Editor, markdownView: MarkdownView) => {
+                if (!checking) {
+                    const currentFile = markdownView.file;
+                    const meta = this.app.metadataCache.getFileCache(currentFile);
+                    const startLine = (meta.frontmatter?.position?.end?.line + 1) || 0;
+                    const startPosition = {
+                        line: startLine,
+                        ch: 0
+                    }
+                    const endPosition = {
+                        line: editor.lineCount(),
+                        ch: 0
+                    }
+                    this.app.vault.configDir
+                    const noYaml = editor.getRange(startPosition, endPosition);
+                    const storedSystem = this.app.vault.configDir + '/plugins/obsidian-folder-locker/crypto.json';
+                    
+                    this.app.vault.adapter.read(storedSystem).then(rawJson => {
+                        const storedSystem = JSON.parse(rawJson);
+                        console.log(rawJson);
+                        console.log(storedSystem);
+                        
+                        const cipherText = encryptWithPassword(noYaml, 'password', storedSystem);
+                        editor.replaceRange(cipherText, startPosition, endPosition);
+                    });
+                }
+                return true;
+            }
+        });
+
+        this.addCommand({
+            id: 'decrypt-current-file',
+            name: 'Decrypt Current File',
+            editorCheckCallback: (checking: boolean, editor: Editor, markdownView: MarkdownView) => {
+                if (!checking) {
+                    const currentFile = markdownView.file;
+                    const meta = this.app.metadataCache.getFileCache(currentFile);
+                    const startLine = (meta.frontmatter?.position?.end?.line + 1) || 0;
+                    const startPosition = {
+                        line: startLine,
+                        ch: 0
+                    }
+                    const endPosition = {
+                        line: editor.lineCount(),
+                        ch: 0
+                    }
+                    this.app.vault.configDir
+                    const noYamlCiphered = editor.getRange(startPosition, endPosition);
+                    const storedSystem = this.app.vault.configDir + '/plugins/obsidian-folder-locker/crypto.json';
+                    
+                    this.app.vault.adapter.read(storedSystem).then(rawJson => {
+                        const storedSystem = JSON.parse(rawJson);
+                        console.log(rawJson);
+                        console.log(storedSystem);
+                        
+                        const plainText = decryptWithPassword(noYamlCiphered, 'password', storedSystem);
+                        editor.replaceRange(plainText, startPosition, endPosition);
+                    });
+                }
+                return true;
+            }
         });
 
         this.addRibbonIcon('dice', 'Sample Plugin', () => {
