@@ -1,9 +1,11 @@
 import { Editor, MarkdownView, Menu, Plugin, TAbstractFile } from 'obsidian';
 import { decryptWithPassword, encryptWithPassword, setUpSystem } from './services/encryption';
 import FolderSelectionModal from './components/folderSelectionModal'
+import PasswordPromptModal from './components/passwordPromptModal';
 // The settingsTab has a circular dependency with the Krypton class, but rollup
 // seems to be able to handle it just fine.
 import KryptonSettingsTab from './components/settingsTab'; 
+import { isSome } from './types';
 
 interface KryptonSettings {
     mySetting: string;
@@ -31,6 +33,23 @@ export default class Krypton extends Plugin {
                 });
             });
         });
+
+        this.addCommand({
+            id: 'modal-test',
+            name: 'Modal Test',
+            callback: () => {
+                const passwordPrompt = new PasswordPromptModal(this.app);
+                passwordPrompt.open();
+                passwordPrompt.onClose = () => {
+                    const maybePassword = passwordPrompt.getPassword();
+                    if (isSome(maybePassword)) {
+                        console.log(`Submitted: ${maybePassword}`)
+                    } else {
+                        console.log('Nothing was submitted or passwords did not match');
+                    }
+                }
+            }
+        })
 
         /*
         Many tasks:
@@ -61,7 +80,7 @@ export default class Krypton extends Plugin {
                 if (!checking) {
                     const currentFile = markdownView.file;
                     const meta = this.app.metadataCache.getFileCache(currentFile);
-                    const startLine = (meta.frontmatter?.position?.end?.line + 1) || 0;
+                    const startLine = (meta?.frontmatter?.position?.end?.line || -1) + 1;
                     const startPosition = {
                         line: startLine,
                         ch: 0
@@ -94,7 +113,7 @@ export default class Krypton extends Plugin {
                 if (!checking) {
                     const currentFile = markdownView.file;
                     const meta = this.app.metadataCache.getFileCache(currentFile);
-                    const startLine = (meta.frontmatter?.position?.end?.line + 1) || 0;
+                    const startLine = (meta?.frontmatter?.position?.end?.line || -1) + 1;
                     const startPosition = {
                         line: startLine,
                         ch: 0
