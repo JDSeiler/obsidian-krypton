@@ -1,9 +1,9 @@
 {
-	"id": "obsidian-folder-locker",
-	"name": "Folder Locker",
+	"id": "obsidian-krypton",
+	"name": "Krypton",
 	"version": "0.0.1",
 	"minAppVersion": "0.9.12",
-	"description": "Password protect folders",
+	"description": "Encrypt notes using a password",
 	"author": "JDSeiler",
 	"authorUrl": "https://github.com/JDSeiler/obsidian-folder-locker",
 	"isDesktopOnly": true

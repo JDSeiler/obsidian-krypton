@@ -1,16 +1,20 @@
-import { App, Editor, FileSystemAdapter, FuzzySuggestModal, MarkdownView, Menu, Modal, normalizePath, Notice, Plugin, PluginSettingTab, Setting, TAbstractFile, View } from 'obsidian';
-import { decryptWithPassword, encryptWithPassword, setUpSystem } from './encryption';
+import { Editor, MarkdownView, Menu, Plugin, TAbstractFile } from 'obsidian';
+import { decryptWithPassword, encryptWithPassword, setUpSystem } from './services/encryption';
+import FolderSelectionModal from './components/folderSelectionModal'
+// The settingsTab has a circular dependency with the Krypton class, but rollup
+// seems to be able to handle it just fine.
+import KryptonSettingsTab from './components/settingsTab'; 
 
-interface MyPluginSettings {
+interface KryptonSettings {
     mySetting: string;
 }
 
-const DEFAULT_SETTINGS: MyPluginSettings = {
+const DEFAULT_SETTINGS: KryptonSettings = {
     mySetting: 'default'
 }
 
-export default class MyPlugin extends Plugin {
-    settings: MyPluginSettings;
+export default class Krypton extends Plugin {
+    settings: KryptonSettings;
 
     async onload() {
         console.log('loading plugin');
@@ -48,7 +52,7 @@ export default class MyPlugin extends Plugin {
                 // Throws an exception if the file exists, so this is safe currently.
                 this.app.vault.create(saveLocation, JSON.stringify(system));
             }
-        })
+        });
 
         this.addCommand({
             id: 'encrypt-current-file',
@@ -116,36 +120,15 @@ export default class MyPlugin extends Plugin {
             }
         });
 
-        this.addRibbonIcon('dice', 'Sample Plugin', () => {
-            new Notice('This is a notice!');
-        });
-
-        this.addStatusBarItem().setText('Status Bar Text');
-
-        this.addCommand({
-            id: 'open-sample-modal',
-            name: 'Open Sample Modal',
-            checkCallback: (checking: boolean) => {
-                let leaf = this.app.workspace.activeLeaf;
-                if (leaf) {
-                    if (!checking) {
-                        new SampleModal(this.app).open();
-                    }
-                    return true;
-                }
-                return false;
-            }
-        });
-
         this.addCommand({
             id: 'create-locker',
             name: 'Create Locker',
             callback: () => {
-                new FileSelectorModal(this.app).open();
+                new FolderSelectionModal(this.app).open();
             }
         });  
 
-        this.addSettingTab(new SampleSettingTab(this.app, this));
+        this.addSettingTab(new KryptonSettingsTab(this.app, this));
     }
 
     onunload() {
@@ -161,83 +144,5 @@ export default class MyPlugin extends Plugin {
     }
 }
 
-class SampleModal extends Modal {
-    constructor(app: App) {
-        super(app);
-    }
 
-    onOpen() {
-        let {contentEl} = this;
-        contentEl.setText('Woah!');
-    }
 
-    onClose() {
-        let {contentEl} = this;
-        contentEl.empty();
-    }
-}
-
-class FileSelectorModal extends FuzzySuggestModal<string> {
-    // List of all folders that contain files
-    folderList: string[] = [];
-    limit = 10;
-
-    constructor(app: App) {
-        super(app);
-        this.setPlaceholder('Create locker in...');
-
-        let visited: {
-            [k: string]: boolean
-        } = {};
-        this.app.vault.getFiles().forEach(file => {
-            if (!file.parent.isRoot() && !visited[file.parent.path]) {
-                this.folderList.push('./' + file.path.split('/').slice(0, -1).join('/'));
-                visited[file.parent.path] = true;
-            }
-        });
-    }
-
-    getItems(): string[] {
-        return this.folderList;
-    }
-
-    getItemText(item: string): string {
-        return item;
-    }
-
-    onChooseItem(item: string, _evt: MouseEvent | KeyboardEvent): void {
-        console.log(`${item} was chosen!`);
-        const fsAdap = this.app.vault.adapter as FileSystemAdapter;
-        const fullPath = fsAdap.getFullPath(normalizePath(item));
-        console.log(fullPath);
-    }
-}
-
-class SampleSettingTab extends PluginSettingTab {
-    plugin: MyPlugin;
-
-    constructor(app: App, plugin: MyPlugin) {
-        super(app, plugin);
-        this.plugin = plugin;
-    }
-
-    display(): void {
-        let {containerEl} = this;
-
-        containerEl.empty();
-
-        containerEl.createEl('h2', {text: 'Settings for my awesome plugin.'});
-
-        new Setting(containerEl)
-            .setName('Setting #1')
-            .setDesc('It\'s a secret')
-            .addText(text => text
-                .setPlaceholder('Enter your secret')
-                .setValue('')
-                .onChange(async (value) => {
-                    console.log('Secret: ' + value);
-                    this.plugin.settings.mySetting = value;
-                    await this.plugin.saveSettings();
-                }));
-    }
-}
