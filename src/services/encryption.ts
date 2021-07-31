@@ -99,7 +99,7 @@ const applySystem = (inputText: string, password: string, storedCryptoSystem: St
     if (!equal(Uint8Array.from(testKey), cryptoSystem.verifierKey)) {
         // This can happen because of a bad password, or tampering
         // Do not touch the files if this happens.
-        throw 'Generated key and verifier key did not match! BAD BAD BAD';
+        throw new PasswordVerificationError('Generated key and verifier key did not match! BAD BAD BAD');
     }
 
     if (mode === 'ENCRYPT') {
@@ -121,7 +121,7 @@ const applySystem = (inputText: string, password: string, storedCryptoSystem: St
         // Return the utf8 directly since it's safe to write to a file.
         return aesjs.utils.utf8.fromBytes(aesCtr.decrypt(plainBytes));
     } else {
-        throw `Unrecognized mode: ${mode}`;
+        throw new Error(`Unrecognized mode: ${mode}`);
     }
 }
 
@@ -131,4 +131,10 @@ export const encryptWithPassword = (plain: string, password: string, storedCrypt
 
 export const decryptWithPassword = (cipher: string, password: string, storedCryptoSystem: StorableCryptoSystem) => {
     return applySystem(cipher, password, storedCryptoSystem, 'DECRYPT');
+}
+
+export class PasswordVerificationError extends Error {
+    constructor(message: string) {
+        super(message);
+    }
 }

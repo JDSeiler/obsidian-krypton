@@ -20,6 +20,11 @@ export function getReplacementRange(app: App, editor: Editor, file: TFile, inclu
     return {start: startPosition, end: endPosition}
 }
 
+export function fileHasFrontmatter(app: App, file: TFile) {
+    const meta = app.metadataCache.getFileCache(file);
+    return meta?.frontmatter !== undefined;
+}
+
 export function pathToCryptoSystem(app: App) {
     return app.vault.configDir + '/plugins/obsidian-folder-locker/crypto.json';
 }

@@ -1,12 +1,14 @@
 import { Editor, MarkdownView, Menu, Notice, Plugin, TAbstractFile } from 'obsidian';
-import { decryptWithPassword, encryptWithPassword, setUpSystem } from './services/encryption';
+
+import { decryptWithPassword, encryptWithPassword, PasswordVerificationError, setUpSystem } from './services/encryption';
+import { getReplacementRange, pathToCryptoSystem, fileHasFrontmatter } from './services/files';
+
 import FolderSelectionModal from './components/folderSelectionModal'
 import PasswordPromptModal from './components/passwordPromptModal';
 // The settingsTab has a circular dependency with the Krypton class, but rollup
 // seems to be able to handle it just fine.
 import KryptonSettingsTab from './components/settingsTab'; 
 import { isSome, unwrap } from './types';
-import { getReplacementRange, pathToCryptoSystem } from './services/files';
 
 interface KryptonSettings {
     encryptFrontmatter: boolean;
@@ -97,11 +99,21 @@ export default class Krypton extends Plugin {
                         passwordPrompt.onClose = () => {
                             const maybePassword = passwordPrompt.getPassword();
                             if (isSome(maybePassword)) {
-                                console.log(`Submitted: ${maybePassword}`)
-                                const cipherText = encryptWithPassword(plainText, unwrap(maybePassword), storedSystem);
-                                editor.replaceRange(cipherText, start, end);
+                                console.log(`Submitted: ${maybePassword}`);
+                                try {
+                                    const cipherText = encryptWithPassword(plainText, unwrap(maybePassword), storedSystem);
+                                    editor.replaceRange(cipherText, start, end);
+                                } catch (e) {
+                                    if (e instanceof PasswordVerificationError) {
+                                        new Notice('Password is incorrect!');
+                                    } else {
+                                        // Something really bad or unexpected happened
+                                        // Dump the error to the console.
+                                        throw e;
+                                    }
+                                }
                             } else {
-                                new Notice('Password was blank or encryption was cancelled');
+                                new Notice('Encryption cancelled');
                             }
                         }
                     });
@@ -122,6 +134,28 @@ export default class Krypton extends Plugin {
                         currentFile, 
                         this.settings.encryptFrontmatter
                     );
+                    /*
+                    BUG:
+                    1. File is encrypted with `encryptFrontmatter` to false
+                    2. User changes setting to True
+                    3. Decryption is attempted
+
+                    The encryption service is expecting a hex string and chokes
+                    on the unencrypted characters.
+
+                    This problem doesn't exist the other way. If you encrypt the
+                    entire file and then decrypt with `encryptFrontMatter` set
+                    to false, the file decrypts normally.
+                    
+                    The following check should address the issue: Simply don't
+                    allow decryption if the setting is set incorrectly.
+                    */
+                    if (fileHasFrontmatter(this.app, currentFile) && this.settings.encryptFrontmatter) {
+                        const message = 'Encrypted file contains frontmatter but the "Encrypt Frontmatter" option is turned on! ' +
+                                        'Please turn "Encrypt Frontmatter" off before decrypting this file.'
+                        new Notice(message, 6500);
+                        return;
+                    }
                     const encryptedText = editor.getRange(start, end);
                     const cryptoSystemLocation = pathToCryptoSystem(this.app);
                     
@@ -135,10 +169,20 @@ export default class Krypton extends Plugin {
                             const maybePassword = passwordPrompt.getPassword();
                             if (isSome(maybePassword)) {
                                 console.log(`Submitted: ${maybePassword}`)
-                                const plainText = decryptWithPassword(encryptedText, unwrap(maybePassword), storedSystem);
-                                editor.replaceRange(plainText, start, end);
+                                try {
+                                    const plainText = decryptWithPassword(encryptedText, unwrap(maybePassword), storedSystem);
+                                    editor.replaceRange(plainText, start, end);
+                                } catch (e) {
+                                    if (e instanceof PasswordVerificationError) {
+                                        new Notice('Password is incorrect!');
+                                    } else {
+                                        // Something really bad or unexpected happened
+                                        // Dump the error to the console.
+                                        throw e;
+                                    }
+                                }
                             } else {
-                                new Notice('Password was blank or decryption was cancelled');
+                                new Notice('Decryption cancelled');
                             }
                         }
                     });
