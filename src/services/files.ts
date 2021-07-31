@@ -19,3 +19,7 @@ export function getReplacementRange(app: App, editor: Editor, file: TFile, inclu
 
     return {start: startPosition, end: endPosition}
 }
+
+export function pathToCryptoSystem(app: App) {
+    return app.vault.configDir + '/plugins/obsidian-folder-locker/crypto.json';
+}

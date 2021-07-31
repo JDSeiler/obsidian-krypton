@@ -6,7 +6,7 @@ import PasswordPromptModal from './components/passwordPromptModal';
 // seems to be able to handle it just fine.
 import KryptonSettingsTab from './components/settingsTab'; 
 import { isSome, unwrap } from './types';
-import { getReplacementRange } from './services/files';
+import { getReplacementRange, pathToCryptoSystem } from './services/files';
 
 interface KryptonSettings {
     encryptFrontmatter: boolean;
@@ -54,10 +54,9 @@ export default class Krypton extends Plugin {
 
         /*
         Many tasks:
-        TODO: Prompt the user for a password instead of hard coding it
+        TODO: Handle when password is wrong
+        TODO: Handle when the crypto system doesn't exist 
         TODO: Create a change password command
-        TODO: Write UI code for when passwords don't match, successful encryption, etc.
-        TODO: Add a setting for toggling encryption of frontmatter
         PAUSE: Refactor
         TODO: Add a command for encrypting all the files in a directory, recursively.
         */
@@ -86,12 +85,10 @@ export default class Krypton extends Plugin {
                         currentFile, 
                         this.settings.encryptFrontmatter
                     );
-
                     const plainText = editor.getRange(start, end);
-                    // TODO: Throw an error if the crypto system doesn't exist
-                    const storedSystem = this.app.vault.configDir + '/plugins/obsidian-folder-locker/crypto.json';
+                    const cryptoSystemLocation = pathToCryptoSystem(this.app);
                     
-                    this.app.vault.adapter.read(storedSystem).then(rawJson => {
+                    this.app.vault.adapter.read(cryptoSystemLocation).then(rawJson => {
                         const storedSystem = JSON.parse(rawJson);
                         
                         const passwordPrompt = new PasswordPromptModal(this.app);
@@ -107,7 +104,6 @@ export default class Krypton extends Plugin {
                                 new Notice('Password was blank or encryption was cancelled');
                             }
                         }
-                        
                     });
                 }
                 return true;
@@ -127,9 +123,9 @@ export default class Krypton extends Plugin {
                         this.settings.encryptFrontmatter
                     );
                     const encryptedText = editor.getRange(start, end);
-                    const storedSystem = this.app.vault.configDir + '/plugins/obsidian-folder-locker/crypto.json';
+                    const cryptoSystemLocation = pathToCryptoSystem(this.app);
                     
-                    this.app.vault.adapter.read(storedSystem).then(rawJson => {
+                    this.app.vault.adapter.read(cryptoSystemLocation).then(rawJson => {
                         const storedSystem = JSON.parse(rawJson);
 
                         const passwordPrompt = new PasswordPromptModal(this.app);
