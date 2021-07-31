@@ -21,13 +21,13 @@ const DEFAULT_SETTINGS: KryptonSettings = {
 export default class Krypton extends Plugin {
   settings: KryptonSettings;
   
-  async onload() {
+  async onload(): Promise<void> {
     console.log('loading plugin');
     
     await this.loadSettings();
     
     // Adding a context menu item
-    this.app.workspace.on('file-menu', (menu: Menu, file: TAbstractFile, source: string) => {
+    this.app.workspace.on('file-menu', (menu: Menu, file: TAbstractFile, _source: string) => {
       console.log(menu);
       menu.addItem((testItem) => {
         testItem.setTitle('My menu item');
@@ -56,7 +56,6 @@ export default class Krypton extends Plugin {
     
     /*
     Many tasks:
-    TODO: Handle when password is wrong
     TODO: Handle when the crypto system doesn't exist 
     TODO: Create a change password command
     PAUSE: Refactor
@@ -202,19 +201,15 @@ export default class Krypton extends Plugin {
     this.addSettingTab(new KryptonSettingsTab(this.app, this));
   }
   
-  onunload() {
-    console.log('unloading plugin');
-  }
+  // onunload() {
+  //   console.log('unloading plugin');
+  // }
   
-  async loadSettings() {
+  async loadSettings(): Promise<void> {
     this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
   }
   
-  async saveSettings() {
+  async saveSettings(): Promise<void> {
     await this.saveData(this.settings);
   }
 }
-    
-    
-    
-    
