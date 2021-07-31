@@ -1,4 +1,14 @@
-/* Sets all the text color to red! */
-/* body {
-    color: red;
-} */
+.krypton-pw-input {
+    display: block;
+    margin: auto;
+}
+
+#krypton-pw-confirm {
+    margin-top: 5%;
+    margin-bottom: 5%;
+}
+
+#krypton-button-group {
+    display: flex;
+    justify-content: center; 
+}

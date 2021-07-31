@@ -1,7 +1,6 @@
 import { App, Modal, Notice } from 'obsidian';
 import { Option } from 'src/types';
 
-
 export default class PasswordPromptModal extends Modal {
     private verifiedPassword: string;
 
@@ -13,15 +12,30 @@ export default class PasswordPromptModal extends Modal {
     onOpen() {
         const passwordBox = this.contentEl.createEl('input', { type: 'password' });
         passwordBox.placeholder = 'Password';
+        passwordBox.className = 'krypton-pw-input';
+        passwordBox.id = 'krypton-pw';
 
         const passwordConfirmBox = this.contentEl.createEl('input', { type: 'password' });
         passwordConfirmBox.placeholder = 'Confirm Password';
+        passwordConfirmBox.className = 'krypton-pw-input';
+        passwordConfirmBox.id = 'krypton-pw-confirm';''
 
-        const submit = this.contentEl.createEl('button', { 'type': 'submit'});
+        const buttonGroup = this.contentEl.createDiv();
+        buttonGroup.id = 'krypton-button-group';
+
+        const cancel = buttonGroup.createEl('button');
+        cancel.id = 'krypton-cancel';
+        cancel.setText('Cancel');
+
+        const submit = buttonGroup.createEl('button', { 'type': 'submit'});
         submit.className = 'mod-cta';
         submit.setText('Submit');
 
-        submit.onClickEvent(_mouseEvent => {
+        submit.onClickEvent(mouseEvent => {
+            // If not a left click, ignore the event
+            if (mouseEvent.button !== 0) {
+                return;
+            }
             const password = passwordBox.value;
             const confirmPassword = passwordConfirmBox.value;
 
@@ -33,6 +47,15 @@ export default class PasswordPromptModal extends Modal {
                 passwordBox.value = '';
                 passwordConfirmBox.value = '';
             }
+        });
+
+        cancel.onClickEvent(mouseEvent => {
+            if (mouseEvent.button !== 0) {
+                return;
+            }
+
+            this.verifiedPassword = '';
+            this.close();
         });
     }
 
