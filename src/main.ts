@@ -1,18 +1,19 @@
-import { Editor, MarkdownView, Menu, Plugin, TAbstractFile } from 'obsidian';
+import { Editor, MarkdownView, Menu, Notice, Plugin, TAbstractFile } from 'obsidian';
 import { decryptWithPassword, encryptWithPassword, setUpSystem } from './services/encryption';
 import FolderSelectionModal from './components/folderSelectionModal'
 import PasswordPromptModal from './components/passwordPromptModal';
 // The settingsTab has a circular dependency with the Krypton class, but rollup
 // seems to be able to handle it just fine.
 import KryptonSettingsTab from './components/settingsTab'; 
-import { isSome } from './types';
+import { isSome, unwrap } from './types';
+import { getReplacementRange } from './services/files';
 
 interface KryptonSettings {
-    mySetting: string;
+    encryptFrontmatter: boolean;
 }
 
 const DEFAULT_SETTINGS: KryptonSettings = {
-    mySetting: 'default'
+    encryptFrontmatter: true
 }
 
 export default class Krypton extends Plugin {
@@ -49,7 +50,7 @@ export default class Krypton extends Plugin {
                     }
                 }
             }
-        })
+        });
 
         /*
         Many tasks:
@@ -79,27 +80,34 @@ export default class Krypton extends Plugin {
             editorCheckCallback: (checking: boolean, editor: Editor, markdownView: MarkdownView) => {
                 if (!checking) {
                     const currentFile = markdownView.file;
-                    const meta = this.app.metadataCache.getFileCache(currentFile);
-                    const startLine = (meta?.frontmatter?.position?.end?.line || -1) + 1;
-                    const startPosition = {
-                        line: startLine,
-                        ch: 0
-                    }
-                    const endPosition = {
-                        line: editor.lineCount(),
-                        ch: 0
-                    }
-                    this.app.vault.configDir
-                    const noYaml = editor.getRange(startPosition, endPosition);
+                    const { start, end } = getReplacementRange(
+                        this.app, 
+                        editor, 
+                        currentFile, 
+                        this.settings.encryptFrontmatter
+                    );
+
+                    const plainText = editor.getRange(start, end);
+                    // TODO: Throw an error if the crypto system doesn't exist
                     const storedSystem = this.app.vault.configDir + '/plugins/obsidian-folder-locker/crypto.json';
                     
                     this.app.vault.adapter.read(storedSystem).then(rawJson => {
                         const storedSystem = JSON.parse(rawJson);
-                        console.log(rawJson);
-                        console.log(storedSystem);
                         
-                        const cipherText = encryptWithPassword(noYaml, 'password', storedSystem);
-                        editor.replaceRange(cipherText, startPosition, endPosition);
+                        const passwordPrompt = new PasswordPromptModal(this.app);
+                        passwordPrompt.open();
+
+                        passwordPrompt.onClose = () => {
+                            const maybePassword = passwordPrompt.getPassword();
+                            if (isSome(maybePassword)) {
+                                console.log(`Submitted: ${maybePassword}`)
+                                const cipherText = encryptWithPassword(plainText, unwrap(maybePassword), storedSystem);
+                                editor.replaceRange(cipherText, start, end);
+                            } else {
+                                new Notice('Password was blank or encryption was cancelled');
+                            }
+                        }
+                        
                     });
                 }
                 return true;
@@ -112,27 +120,31 @@ export default class Krypton extends Plugin {
             editorCheckCallback: (checking: boolean, editor: Editor, markdownView: MarkdownView) => {
                 if (!checking) {
                     const currentFile = markdownView.file;
-                    const meta = this.app.metadataCache.getFileCache(currentFile);
-                    const startLine = (meta?.frontmatter?.position?.end?.line || -1) + 1;
-                    const startPosition = {
-                        line: startLine,
-                        ch: 0
-                    }
-                    const endPosition = {
-                        line: editor.lineCount(),
-                        ch: 0
-                    }
-                    this.app.vault.configDir
-                    const noYamlCiphered = editor.getRange(startPosition, endPosition);
+                    const { start, end } = getReplacementRange(
+                        this.app, 
+                        editor, 
+                        currentFile, 
+                        this.settings.encryptFrontmatter
+                    );
+                    const encryptedText = editor.getRange(start, end);
                     const storedSystem = this.app.vault.configDir + '/plugins/obsidian-folder-locker/crypto.json';
                     
                     this.app.vault.adapter.read(storedSystem).then(rawJson => {
                         const storedSystem = JSON.parse(rawJson);
-                        console.log(rawJson);
-                        console.log(storedSystem);
-                        
-                        const plainText = decryptWithPassword(noYamlCiphered, 'password', storedSystem);
-                        editor.replaceRange(plainText, startPosition, endPosition);
+
+                        const passwordPrompt = new PasswordPromptModal(this.app);
+                        passwordPrompt.open();
+
+                        passwordPrompt.onClose = () => {
+                            const maybePassword = passwordPrompt.getPassword();
+                            if (isSome(maybePassword)) {
+                                console.log(`Submitted: ${maybePassword}`)
+                                const plainText = decryptWithPassword(encryptedText, unwrap(maybePassword), storedSystem);
+                                editor.replaceRange(plainText, start, end);
+                            } else {
+                                new Notice('Password was blank or decryption was cancelled');
+                            }
+                        }
                     });
                 }
                 return true;
