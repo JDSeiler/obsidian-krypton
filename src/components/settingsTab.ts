@@ -14,18 +14,19 @@ export default class KryptonSettingsTab extends PluginSettingTab {
 
         containerEl.empty();
 
-        containerEl.createEl('h2', {text: 'Settings for my awesome plugin.'});
+        containerEl.createEl('h2', {text: 'Krypton Settings'});
 
         new Setting(containerEl)
-            .setName('Setting #1')
-            .setDesc('It\'s a secret')
-            .addText(text => text
-                .setPlaceholder('Enter your secret')
-                .setValue('')
+            .setName('Encrypt Frontmatter')
+            .setDesc('When turned on, Krypton will also encrypt the frontmatter of your notes. Turn off to leave frontmatter unencrypted.')
+            .addToggle(toggle => {
+               toggle
+                .setValue(this.plugin.settings.encryptFrontmatter)
+                .setTooltip('Encrypt Frontmatter')
                 .onChange(async (value) => {
-                    console.log('Secret: ' + value);
-                    this.plugin.settings.mySetting = value;
+                    this.plugin.settings.encryptFrontmatter = value;
                     await this.plugin.saveSettings();
-                }));
+                });
+            });
     }
 }
