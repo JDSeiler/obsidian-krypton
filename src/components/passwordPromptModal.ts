@@ -3,6 +3,8 @@ import { Option } from 'src/types';
 
 export default class PasswordPromptModal extends Modal {
     private verifiedPassword: string;
+    private passwordBox: HTMLInputElement;
+    private passwordConfirmBox: HTMLInputElement;
 
     constructor(app: App) {
         super(app);
@@ -10,15 +12,20 @@ export default class PasswordPromptModal extends Modal {
     }
 
     onOpen() {
-        const passwordBox = this.contentEl.createEl('input', { type: 'password' });
-        passwordBox.placeholder = 'Password';
-        passwordBox.className = 'krypton-pw-input';
-        passwordBox.id = 'krypton-pw';
+        /*
+        ===============
+        Create Elements
+        ===============
+        */
+        this.passwordBox = this.contentEl.createEl('input', { type: 'password' });
+        this.passwordBox.placeholder = 'Password';
+        this.passwordBox.className = 'krypton-pw-input';
+        this.passwordBox.id = 'krypton-pw';
 
-        const passwordConfirmBox = this.contentEl.createEl('input', { type: 'password' });
-        passwordConfirmBox.placeholder = 'Confirm Password';
-        passwordConfirmBox.className = 'krypton-pw-input';
-        passwordConfirmBox.id = 'krypton-pw-confirm';''
+        this.passwordConfirmBox = this.contentEl.createEl('input', { type: 'password' });
+        this.passwordConfirmBox.placeholder = 'Confirm Password';
+        this.passwordConfirmBox.className = 'krypton-pw-input';
+        this.passwordConfirmBox.id = 'krypton-pw-confirm';''
 
         const buttonGroup = this.contentEl.createDiv();
         buttonGroup.id = 'krypton-button-group';
@@ -31,22 +38,31 @@ export default class PasswordPromptModal extends Modal {
         submit.className = 'mod-cta';
         submit.setText('Submit');
 
+        /*
+        ========================
+        Register Event Listeners
+        ========================
+        */
+
+        this.passwordBox.onkeypress = (kbEvent) => {
+            if (kbEvent.key === 'Enter') {
+                this.passwordConfirmBox.focus();
+            }
+        }
+
+        this.passwordConfirmBox.onkeypress = (kbEvent) => {
+            if (kbEvent.key === 'Enter') {
+                this.submitPassword();
+            }
+        }
+
         submit.onClickEvent(mouseEvent => {
             // If not a left click, ignore the event
             if (mouseEvent.button !== 0) {
                 return;
             }
-            const password = passwordBox.value;
-            const confirmPassword = passwordConfirmBox.value;
 
-            if (password === confirmPassword) {
-                this.verifiedPassword = password;
-                this.close();
-            } else {
-                new Notice('Passwords do not match!');
-                passwordBox.value = '';
-                passwordConfirmBox.value = '';
-            }
+            this.submitPassword();
         });
 
         cancel.onClickEvent(mouseEvent => {
@@ -61,5 +77,19 @@ export default class PasswordPromptModal extends Modal {
 
     getPassword(): Option<string> {
         return this.verifiedPassword || null;
+    }
+
+    private submitPassword(): void {
+        const password = this.passwordBox.value;
+        const confirmPassword = this.passwordConfirmBox.value;
+
+        if (password === confirmPassword) {
+            this.verifiedPassword = password;
+            this.close();
+        } else {
+            new Notice('Passwords do not match!');
+            this.passwordBox.value = '';
+            this.passwordConfirmBox.value = '';
+        }
     }
 }
