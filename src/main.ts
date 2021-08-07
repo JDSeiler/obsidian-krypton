@@ -1,4 +1,4 @@
-import { Editor, MarkdownView, Menu, Modal, Notice, Plugin, TAbstractFile } from 'obsidian';
+import { Editor, MarkdownView, Menu, Notice, Plugin, TAbstractFile } from 'obsidian';
 
 import { decryptWithPassword, encryptWithPassword, PasswordVerificationError, setUpSystem } from './services/encryption';
 import { getReplacementRange, pathToCryptoSystem, fileHasFrontmatter } from './services/files';
@@ -59,12 +59,31 @@ export default class Krypton extends Plugin {
       id: 'create-encryption-keys',
       name: 'Initial Setup',
       callback: () => {
-        // Don't overwrite anything if it already exists, use a separate method for changing password
-        const TEST_PASSWORD = 'password';
-        const system = setUpSystem(TEST_PASSWORD);
-        const saveLocation = this.app.vault.configDir + '/plugins/obsidian-folder-locker/crypto.json';
-        // Throws an exception if the file exists, so this is safe currently.
-        this.app.vault.create(saveLocation, JSON.stringify(system));
+        const passwordPrompt = new PasswordPromptModal(this.app);
+        passwordPrompt.open();
+        passwordPrompt.onClose = () => {
+          const maybePassword = passwordPrompt.getPassword();
+          if (isSome(maybePassword)) {
+            const chosenPassword = unwrap(maybePassword);
+            const system = setUpSystem(chosenPassword);
+            const saveLocation = this.app.vault.configDir + '/plugins/obsidian-folder-locker/crypto.json';
+            try {
+              this.app.vault.create(saveLocation, JSON.stringify(system));
+              new Notice('Encryption keys saved succesfully!');
+            } catch (e) {
+              // Most likely a crypto file already exists
+              new Notice(
+                'Could not write encryption keys to disk. ' + 
+                'If you have previously created encryption keys, ' + 
+                'please use "Krypton: Change Password" instead.'
+              );
+            }
+          } else {
+            new Notice(
+              'No password chosen or provided password was blank. No encryption keys created.'
+            );
+          }
+        };
       }
     });
     
