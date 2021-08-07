@@ -1,9 +1,8 @@
-import { Editor, MarkdownView, Menu, Notice, Plugin, TAbstractFile } from 'obsidian';
+import { Editor, MarkdownView, Notice, Plugin } from 'obsidian';
 
 import { decryptWithPassword, encryptWithPassword, PasswordVerificationError, setUpSystem } from './services/encryption';
 import { getReplacementRange, pathToCryptoSystem, fileHasFrontmatter } from './services/files';
 
-import FolderSelectionModal from './components/folderSelectionModal';
 import PasswordPromptModal from './components/passwordPromptModal';
 // The settingsTab has a circular dependency with the Krypton class, but rollup
 // seems to be able to handle it just fine.
@@ -26,34 +25,7 @@ export default class Krypton extends Plugin {
     console.log('loading plugin');
     
     await this.loadSettings();
-    
-    // Adding a context menu item
-    this.app.workspace.on('file-menu', (menu: Menu, file: TAbstractFile, _source: string) => {
-      console.log(menu);
-      menu.addItem((testItem) => {
-        testItem.setTitle('My menu item');
-        testItem.onClick(_e => {
-          console.log(file);
-        });
-      });
-    });
-    
-    this.addCommand({
-      id: 'modal-test',
-      name: 'Modal Test',
-      callback: () => {
-        const passwordPrompt = new PasswordPromptModal(this.app);
-        passwordPrompt.open();
-        passwordPrompt.onClose = () => {
-          const maybePassword = passwordPrompt.getPassword();
-          if (isSome(maybePassword)) {
-            console.log(`Submitted: ${maybePassword}`);
-          } else {
-            console.log('Nothing was submitted or passwords did not match');
-          }
-        };
-      }
-    });
+    this.addSettingTab(new KryptonSettingsTab(this.app, this));
     
     this.addCommand({
       id: 'create-encryption-keys',
@@ -224,21 +196,7 @@ export default class Krypton extends Plugin {
         return true;
       }
     });
-    
-    this.addCommand({
-      id: 'create-locker',
-      name: 'Create Locker',
-      callback: () => {
-        new FolderSelectionModal(this.app).open();
-      }
-    });  
-    
-    this.addSettingTab(new KryptonSettingsTab(this.app, this));
   }
-  
-  // onunload() {
-  //   console.log('unloading plugin');
-  // }
   
   async loadSettings(): Promise<void> {
     this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
