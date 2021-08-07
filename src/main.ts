@@ -1,4 +1,4 @@
-import { Editor, MarkdownView, Menu, Notice, Plugin, TAbstractFile } from 'obsidian';
+import { Editor, MarkdownView, Menu, Modal, Notice, Plugin, TAbstractFile } from 'obsidian';
 
 import { decryptWithPassword, encryptWithPassword, PasswordVerificationError, setUpSystem } from './services/encryption';
 import { getReplacementRange, pathToCryptoSystem, fileHasFrontmatter } from './services/files';
@@ -8,6 +8,7 @@ import PasswordPromptModal from './components/passwordPromptModal';
 // The settingsTab has a circular dependency with the Krypton class, but rollup
 // seems to be able to handle it just fine.
 import KryptonSettingsTab from './components/settingsTab'; 
+import InfoModal from './components/infoModal';
 import { isSome, unwrap } from './types';
 
 interface KryptonSettings {
@@ -54,13 +55,6 @@ export default class Krypton extends Plugin {
       }
     });
     
-    /*
-    Many tasks:
-    TODO: Handle when the crypto system doesn't exist 
-    TODO: Create a change password command
-    PAUSE: Refactor
-    TODO: Add a command for encrypting all the files in a directory, recursively.
-    */
     this.addCommand({
       id: 'create-encryption-keys',
       name: 'Initial Setup',
@@ -115,6 +109,14 @@ export default class Krypton extends Plugin {
                 new Notice('Encryption cancelled');
               }
             };
+          }).catch(_e => {
+            const helpPopup = new InfoModal(this.app);
+            helpPopup.setTitleText('Could not open stored key file:');
+            helpPopup.setBodyText(
+              'Run "Krypton: Intitial Setup" to choose a password ' + 
+              'and create encryption keys.'
+            );
+            helpPopup.open();
           });
         }
         return true;
@@ -150,9 +152,15 @@ export default class Krypton extends Plugin {
           allow decryption if the setting is set incorrectly.
           */
           if (fileHasFrontmatter(this.app, currentFile) && this.settings.encryptFrontmatter) {
-            const message = 'Encrypted file contains frontmatter but the "Encrypt Frontmatter" option is turned on! ' +
-            'Please turn "Encrypt Frontmatter" off before decrypting this file.';
-            new Notice(message, 6500);
+            const helpPopup = new InfoModal(this.app);
+            helpPopup.setTitleText('Krypton Settings Mismatch:');
+
+            const bodyMessage = `The file "${currentFile.name}" contains plaintext frontmatter but the "Encrypt Frontmatter" option is turned on! ` +
+            'When "Encrypt Frontmatter" is turned on, Krypton assumes all encrypted files will not contain plaintext frontmatter. ' +
+            'To decrypt this file, first turn "Encrypt Frontmatter" off and then rerun the decryption.';
+            helpPopup.setBodyText(bodyMessage);
+
+            helpPopup.open();
             return;
           }
           const encryptedText = editor.getRange(start, end);
@@ -184,6 +192,14 @@ export default class Krypton extends Plugin {
                 new Notice('Decryption cancelled');
               }
             };
+          }).catch(_e => {
+            const helpPopup = new InfoModal(this.app);
+            helpPopup.setTitleText('Could not open stored key file:');
+            helpPopup.setBodyText(
+              'Run "Krypton: Intitial Setup" to choose a password ' + 
+              'and create encryption keys.'
+            );
+            helpPopup.open();
           });
         }
         return true;
