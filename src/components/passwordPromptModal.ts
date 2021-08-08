@@ -11,7 +11,7 @@ export default class PasswordPromptModal extends Modal {
     this.titleEl.setText('Enter your password');
   }
   
-  onOpen() {
+  onOpen(): void {
     /*
     ===============
     Create Elements
