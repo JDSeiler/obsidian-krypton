@@ -1,3 +1,5 @@
+import { Editor, MarkdownView } from 'obsidian';
+
 export type Option<T> = T | null;
 // export type Result<T, E extends Error> = T | E;
 
@@ -16,3 +18,6 @@ export function isSome<T>(o: Option<T>): boolean {
 export function isNone<T>(o: Option<T>): boolean {
   return o === null;
 }
+
+export type simpleCallback = () => void;
+export type editorCheckCallback = (checking: boolean, editor: Editor, markdownView: MarkdownView) => boolean | void
