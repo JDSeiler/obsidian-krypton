@@ -125,11 +125,11 @@ const applySystem = (inputText: string, password: string, storedCryptoSystem: St
   }
 };
 
-export const encryptWithPassword = (plain: string, password: string, storedCryptoSystem: StorableCryptoSystem) => {
+export const encryptWithPassword = (plain: string, password: string, storedCryptoSystem: StorableCryptoSystem): string => {
   return applySystem(plain, password, storedCryptoSystem, 'ENCRYPT');
 };
 
-export const decryptWithPassword = (cipher: string, password: string, storedCryptoSystem: StorableCryptoSystem) => {
+export const decryptWithPassword = (cipher: string, password: string, storedCryptoSystem: StorableCryptoSystem): string => {
   return applySystem(cipher, password, storedCryptoSystem, 'DECRYPT');
 };
 
