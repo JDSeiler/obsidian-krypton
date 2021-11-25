@@ -16,7 +16,7 @@ It exposes 4 commands:
 2. Change Password :: For changing your password **and** replacing your encryption keys.
 3. Encrypt File :: Encrypts the contents of the file. Replacing the text with the hex digest
    of the encrypted binary.
-4. Decrypt File :; Decrypts an encrypted file.
+4. Decrypt File :: Decrypts an encrypted file.
 
 Krypton also exposes one setting: Whether or not to encrypt note front-matter.
 By default Krypton will encrypt front-matter, but you may want to turn this off
