@@ -7,6 +7,7 @@ import KryptonSettingsTab from './components/settingsTab';
 import { encryptCommand } from './commands/encrypt';
 import { decryptCommand } from './commands/decrypt';
 import { intialSetupCommand } from './commands/initialSetup';
+import { changePasswordCommand } from './commands/changePassword';
 
 interface KryptonSettings {
   encryptFrontmatter: boolean;
@@ -20,8 +21,6 @@ export default class Krypton extends Plugin {
   settings: KryptonSettings;
   
   async onload(): Promise<void> {
-    console.log('loading plugin');
-    
     await this.loadSettings();
     this.addSettingTab(new KryptonSettingsTab(this.app, this));
     
@@ -29,6 +28,12 @@ export default class Krypton extends Plugin {
       id: 'create-encryption-keys',
       name: 'Initial Setup',
       callback: intialSetupCommand(this)
+    });
+
+    this.addCommand({
+      id: 'change-password',
+      name: 'Change Password',
+      callback: changePasswordCommand(this)
     });
     
     this.addCommand({

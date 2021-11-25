@@ -1,16 +1,6 @@
-# Intellij
-*.iml
-.idea
-
-# npm
 node_modules
-package-lock.json
-
-# build
-main.js
-*.js.map
-
-# obsidian
-data.json
-
+.vscode
 crypto.json
+crypto-new.json
+main.js
+data.json

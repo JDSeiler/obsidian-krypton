@@ -4,11 +4,12 @@ import { isSome, simpleCallback, unwrap } from 'src/types';
 import { setUpSystem } from 'src/services/encryption';
 import PasswordPromptModal from 'src/components/passwordPromptModal';
 import ConfirmationModal from 'src/components/confirmationModal';
+import { pathToCryptoSystem } from 'src/services/files';
 
 export const intialSetupCommand = (plugin: Krypton): simpleCallback => {
   return () => {
-    const userWarning = 'There is NO WAY to recover plugin password if you lose it. ' +
-      'Any files encrypted with plugin password will be LOST FOREVER if you forget your ' +
+    const userWarning = 'There is NO WAY to recover the plugin password if you lose it. ' +
+      'Any files encrypted with the plugin password will be LOST FOREVER if you forget your ' +
       'password or change it, even if you change it back! \n\n' +
       'If you have previously used Initial Setup to create encryption keys, please use the ' +
       '"Krypton: Change Password" command instead.';
@@ -22,7 +23,8 @@ export const intialSetupCommand = (plugin: Krypton): simpleCallback => {
         if (isSome(maybePassword)) {
           const chosenPassword = unwrap(maybePassword);
           const system = setUpSystem(chosenPassword);
-          const saveLocation = plugin.app.vault.configDir + '/plugins/obsidian-folder-locker/crypto.json';
+          const saveLocation = pathToCryptoSystem(plugin.app);
+
           plugin.app.vault.create(saveLocation, JSON.stringify(system)).then(_newFile => {
             new Notice('Encryption keys saved succesfully!');
           }).catch(_e => {

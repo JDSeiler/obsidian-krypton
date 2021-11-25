@@ -38,3 +38,7 @@ export function fileHasFrontmatter(app: App, file: TFile): boolean {
 export function pathToCryptoSystem(app: App): string {
   return app.vault.configDir + '/plugins/obsidian-folder-locker/crypto.json';
 }
+
+export function pathToPluginFolder(app: App): string {
+  return app.vault.configDir + '/plugins/obsidian-folder-locker/';
+}
