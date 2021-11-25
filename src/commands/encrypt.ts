@@ -28,7 +28,6 @@ export const encryptCommand = (plugin: Krypton): editorCheckCallback => {
         passwordPrompt.onClose = () => {
           const maybePassword = passwordPrompt.getPassword();
           if (isSome(maybePassword)) {
-            console.log(`Submitted: ${maybePassword}`);
             try {
               const cipherText = encryptWithPassword(plainText, unwrap(maybePassword), storedSystem);
               editor.replaceRange(cipherText, start, end);

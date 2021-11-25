@@ -56,7 +56,6 @@ export const decryptCommand = (plugin: Krypton): editorCheckCallback => {
         passwordPrompt.onClose = () => {
           const maybePassword = passwordPrompt.getPassword();
           if (isSome(maybePassword)) {
-            console.log(`Submitted: ${maybePassword}`);
             try {
               const plainText = decryptWithPassword(encryptedText, unwrap(maybePassword), storedSystem);
               editor.replaceRange(plainText, start, end);
