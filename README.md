@@ -1,57 +1,41 @@
-## Obsidian Sample Plugin
+# Krypton
+## Disclaimer
+This software is provided 'as-is', without any express or implied
+warranty. In no event will the authors be held liable for any damages
+arising from the use of this software.
 
-This is a sample plugin for Obsidian (https://obsidian.md).
+**Bottom Line:** Usage of this plugin can result in losing the contents of your notes **forever**! Use it at
+your own risk! I made this plugin just for fun and for personal use. But because of the potential
+risks of using it I decided **not** to publish it. I am not currently in a position to actively maintain
+the plugin and test it enough such that I'd be comfortable letting it loose to the community.
 
-This project uses Typescript to provide type checking and documentation.
-The repo depends on the latest plugin API (obsidian.d.ts) in Typescript Definition format, which contains TSDoc comments describing what it does.
+## About this plugin
+Krypton is a plugin for encrypting the contents of individual notes using a password.
+It exposes 4 commands:
+1. Initial Setup :: For setting up encryption keys / a password for the first time.
+2. Change Password :: For changing your password **and** replacing your encryption keys.
+3. Encrypt File :: Encrypts the contents of the file. Replacing the text with the hex digest
+   of the encrypted binary.
+4. Decrypt File :; Decrypts an encrypted file.
 
-**Note:** The Obsidian API is still in early alpha and is subject to change at any time!
+Krypton also exposes one setting: Whether or not to encrypt note front-matter.
+By default Krypton will encrypt front-matter, but you may want to turn this off
+if you want your tags and other metadata to remain intact for encrypted files.
 
-This sample plugin demonstrates some of the basic functionality the plugin API can do.
-- Changes the default font color to red using `styles.css`.
-- Adds a ribbon icon, which shows a Notice when clicked.
-- Adds a command "Open Sample Modal" which opens a Modal.
-- Adds a plugin setting tab to the settings page.
-- Registers a global click event and output 'click' to the console.
-- Registers a global interval which logs 'setInterval' to the console.
+## Development
+This plugin is developed just like any other Obsidian plugin. See the [Obsidian Sample Plugin](https://github.com/obsidianmd/obsidian-sample-plugin)
+on GitHub for full details. However, here are some quick getting started instructions:
+1. Create a separate Obsidian vault for testing.
+2. Clone this repo into the `.obsidian/plugins` folder of the testing vault.
+3. Run `npm install` or `yarn install` to install dependencies.
+4. Run `npm run dev` to bundle the plugin and start rollup in watch mode.
+5. Open Obsidian and select the testing vault.
 
-### First time developing plugins?
+Now you're ready to make changes to the plugin and test them in Obsidian.
 
-Quick starting guide for new plugin devs:
+See also: https://github.com/obsidianmd/obsidian-api for Obsidian API documentation.
 
-- Make a copy of this repo as a template with the "Use this template" button (login to GitHub if you don't see it).
-- Clone your repo to a local development folder. For convenience, you can place this folder in your `.obsidian/plugins/your-plugin-name` folder.
-- Install NodeJS, then run `npm i` in the command line under your repo folder.
-- Run `npm run dev` to compile your plugin from `main.ts` to `main.js`.
-- Make changes to `main.ts` (or create new `.ts` files). Those changes should be automatically compiled into `main.js`.
-- Reload Obsidian to load the new version of your plugin.
-- Enable plugin in settings window.
-- For updates to the Obsidian API run `npm update` in the command line under your repo folder.
-
-### Releasing new releases
-
-- Update your `manifest.json` with your new version number, such as `1.0.1`, and the minimum Obsidian version required for your latest release.
-- Update your `versions.json` file with `"new-plugin-version": "minimum-obsidian-version"` so older versions of Obsidian can download an older version of your plugin that's compatible.
-- Create new GitHub release using your new version number as the "Tag version". Use the exact version number, don't include a prefix `v`. See here for an example: https://github.com/obsidianmd/obsidian-sample-plugin/releases
-- Upload the files `manifest.json`, `main.js`, `styles.css` as binary attachments.
-- Publish the release.
-
-### Adding your plugin to the community plugin list
-
-- Publish an initial version.
-- Make sure you have a `README.md` file in the root of your repo.
-- Make a pull request at https://github.com/obsidianmd/obsidian-releases to add your plugin.
-
-### How to use
-
-- Clone this repo.
-- `npm i` or `yarn` to install dependencies
-- `npm run dev` to start compilation in watch mode.
-
-### Manually installing the plugin
-
-- Copy over `main.js`, `styles.css`, `manifest.json` to your vault `VaultFolder/.obsidian/plugins/your-plugin-id/`.
-
-### API Documentation
-
-See https://github.com/obsidianmd/obsidian-api
+## Questions? Want to make a contribution?
+Feel free to open an Issue or Pull Request. While I don't have plans to actively
+maintain this plugin personally, I'm happy to work with folks who have an interest
+in the plugin.
